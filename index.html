@@ -70,9 +70,464 @@ const P = {
   bg: "#F8F6F1", card: "#FFFFFF", text: "#1C1917", muted: "#78716C", light: "#A8A29E",
   accent: "#2F4F2F", accentHov: "#3D6B3D", accentPale: "#E8F0E8",
   border: "#E7E5E4", borderLt: "#F0EEEB", done: "#6B8F5B",
-  ma: "#BF616A", bor: "#D08770", kan: "#8FAA7E", hover: "#F5F3EE",
+  ma: "#BF616A", bor: "#C9A227", kan: "#5B9A5B", hover: "#F5F3EE",
   shadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
 };
+const bF = "'Fraunces', serif";
+const pCol = { "må": P.ma, "bør": P.bor, "kan": P.kan };
+
+const Micro = ({ children, style }) => <p style={{ fontSize: ".8rem", color: P.muted, lineHeight: 1.5, marginTop: 4, fontWeight: 300, ...style }}>{children}</p>;
+const STitle = ({ children }) => <h3 style={{ fontFamily: bF, fontSize: "1.1rem", fontWeight: 500, color: P.text, letterSpacing: "-.01em" }}>{children}</h3>;
+const Card = ({ children, style = {}, delay = 0 }) => <div style={{ background: P.card, border: `1px solid ${P.border}`, borderRadius: 12, padding: "20px 22px", boxShadow: P.shadow, animation: `fadeUp .4s ease ${delay}s both`, ...style }}>{children}</div>;
+
+const Btn = ({ children, onClick, disabled, ghost, danger, style = {} }) => {
+  const base = ghost ? { background: "transparent", color: danger ? P.ma : P.muted, border: `1px solid ${danger ? P.ma : P.border}` } : { background: disabled ? P.light : P.accent, color: "#fff", border: "none" };
+  return <button onClick={onClick} disabled={disabled} style={{ width: "100%", padding: ghost ? "10px 18px" : "14px 24px", borderRadius: ghost ? 8 : 10, fontSize: ghost ? ".85rem" : ".95rem", fontWeight: ghost ? 500 : 600, cursor: disabled ? "not-allowed" : "pointer", transition: "all .2s", letterSpacing: ".01em", ...base, ...style }}
+    onMouseEnter={e => { if (disabled) return; if (ghost) { e.target.style.background = P.hover; e.target.style.color = P.text; } else e.target.style.background = P.accentHov; }}
+    onMouseLeave={e => { if (disabled) return; if (ghost) { e.target.style.background = "transparent"; e.target.style.color = danger ? P.ma : P.muted; } else e.target.style.background = P.accent; }}
+  >{children}</button>;
+};
+
+const Input = ({ value, onChange, placeholder, multiline, rows = 1, style = {} }) => {
+  const sh = { width: "100%", padding: "10px 14px", background: P.bg, border: `1px solid ${P.borderLt}`, borderRadius: 8, fontSize: ".9rem", color: P.text, outline: "none", transition: "border .2s", resize: "none", lineHeight: 1.6, fontWeight: 400, ...style };
+  const fo = e => { e.target.style.borderColor = P.accent; };
+  const bl = e => { e.target.style.borderColor = P.borderLt; };
+  if (multiline) return <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows} style={sh} onFocus={fo} onBlur={bl} />;
+  return <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={sh} onFocus={fo} onBlur={bl} />;
+};
+
+/*  HEADER */
+const Header = ({ screen, setScreen, dateTab, setDateTab, showDateTabs }) => (
+  <header style={{ position: "sticky", top: 0, zIndex: 100, background: `${P.bg}EE`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${P.border}`, padding: "12px 20px 0" }}>
+    <div style={{ maxWidth: 560, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+        <div style={{ cursor: "pointer" }} onClick={() => setScreen("dashboard")}>
+          <h1 style={{ fontFamily: bF, fontSize: "1.5rem", fontWeight: 700, letterSpacing: "-.03em", color: P.text, lineHeight: 1 }}>Først</h1>
+          <p style={{ fontSize: ".65rem", color: P.light, fontWeight: 400, letterSpacing: ".06em", textTransform: "uppercase", marginTop: 2 }}>kveldsbrief + fokusøkt</p>
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <button onClick={() => setScreen("guide")} title="Hvordan bruke" style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: screen === "guide" ? P.accent : P.muted, transition: "color .2s" }}
+            onMouseEnter={e => e.currentTarget.style.color = P.accent} onMouseLeave={e => { if (screen !== "guide") e.currentTarget.style.color = P.muted; }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </button>
+          <button onClick={() => setScreen("data")} title="Data" style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: screen === "data" ? P.accent : P.muted, transition: "color .2s" }}
+            onMouseEnter={e => e.currentTarget.style.color = P.accent} onMouseLeave={e => { if (screen !== "data") e.currentTarget.style.color = P.muted; }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          </button>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 0 }}>
+        {[{ id: "dashboard", label: "I dag" }, { id: "kveldsbrief", label: "Kveldsbrief" }, { id: "session", label: "Først-økt" }].map(tab => {
+          const on = screen === tab.id;
+          return <button key={tab.id} onClick={() => setScreen(tab.id)} style={{ flex: 1, padding: "10px 0 12px", background: "none", border: "none", borderBottom: on ? `2px solid ${P.accent}` : "2px solid transparent", color: on ? P.accent : P.muted, fontSize: ".82rem", fontWeight: on ? 600 : 400, cursor: "pointer", transition: "all .2s" }}>{tab.label}</button>;
+        })}
+      </div>
+    </div>
+    {showDateTabs && (
+      <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", gap: 6, padding: "8px 0 10px", alignItems: "center" }}>
+        {["today", "tomorrow"].map(t => {
+          const on = dateTab === t;
+          return <button key={t} onClick={() => setDateTab(t)} style={{ padding: "5px 14px", borderRadius: 20, border: on ? `1.5px solid ${P.accent}` : `1px solid ${P.border}`, background: on ? P.accentPale : "transparent", color: on ? P.accent : P.muted, fontSize: ".78rem", fontWeight: on ? 600 : 400, cursor: "pointer", transition: "all .15s" }}>{t === "today" ? "I dag" : "I morgen"}</button>;
+        })}
+        <span style={{ fontSize: ".75rem", color: P.light, marginLeft: 6, fontWeight: 300 }}>{fmtDateLabel(dateTab === "today" ? today() : tomorrow())}</span>
+      </div>
+    )}
+  </header>
+);
+
+/*  DASHBOARD */
+const Dashboard = ({ data, setData, dateTab, onStart }) => {
+  const date = dateTab === "today" ? today() : tomorrow();
+  const plan = data.dayPlans[date] || {};
+  const raw = data.tasks[date] || [];
+  const tasks = [...raw];
+  while (tasks.length < 12) tasks.push({ text: "", priority: "bør", done: false });
+  const sessions = (data.sessions || []).filter(s => s.date === date).sort((a, b) => (b.startTime || "").localeCompare(a.startTime || ""));
+  const mC = tasks.filter(t => t.priority === "må").length;
+  const mD = tasks.filter(t => t.priority === "må" && t.done).length;
+  const allM = mC > 0 && mC === mD;
+  const [toast, setToast] = useState("");
+
+  const upd = (i, f, v) => { const t = [...tasks]; t[i] = { ...t[i], [f]: v }; const next = { ...data, tasks: { ...data.tasks, [date]: t } }; setData(next); saveData(next); };
+
+  const move = () => {
+    const tom = dateTab === "today" ? tomorrow() : (() => { const d = new Date(date); d.setDate(d.getDate() + 1); return fmt(d); })();
+    const ex = [...(data.tasks[tom] || [])]; while (ex.length < 12) ex.push({ text: "", priority: "bør", done: false });
+    const unc = tasks.filter(t => t.text.trim() && !t.done);
+    if (unc.length === 0) { setToast("Ingen uferdige oppgaver å flytte."); setTimeout(() => setToast(""), 2500); return; }
+    const freeSlots = ex.filter(t => !t.text.trim()).length;
+    if (freeSlots < unc.length) { setToast(`Ikke plass til alt i morgen (${unc.length} uferdige, ${freeSlots} ledige). Rydd noen oppgaver først.`); setTimeout(() => setToast(""), 3500); return; }
+    let idx = ex.findIndex(t => !t.text.trim());
+    unc.forEach(t => { if (idx !== -1 && idx < 12) { ex[idx] = { ...t, done: false }; idx = ex.findIndex((t2, i2) => i2 > idx && !t2.text.trim()); } });
+    const next = { ...data, tasks: { ...data.tasks, [tom]: ex } }; setData(next); saveData(next);
+    setToast(`${unc.length} oppgave${unc.length > 1 ? "r" : ""} flyttet til i morgen.`); setTimeout(() => setToast(""), 2500);
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeIn .3s ease" }}>
+      <Card>
+        <STitle>Dagens leveranse</STitle>
+        <Micro>Én setning. Hva skal være ferdig i dag?</Micro>
+        <p style={{ marginTop: 10, fontSize: "1.05rem", fontWeight: 500, color: plan.leveranse ? P.text : P.light }}>{plan.leveranse || "Ikke definert ennå"}</p>
+      </Card>
+      <Card delay={.05}>
+        <STitle>Første steg</STitle>
+        <Micro>Første fysiske handling. Start så smått at du ikke kan feile.</Micro>
+        <p style={{ marginTop: 10, fontSize: ".95rem", color: plan.forsteSteg ? P.text : P.light }}>{plan.forsteSteg || "Ikke definert ennå"}</p>
+      </Card>
+      <div style={{ animation: "fadeUp .4s ease .1s both" }}><Btn onClick={onStart}>Start Først-økt</Btn></div>
+
+      <Card delay={.15} style={{ padding: "20px 16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 6px", marginBottom: 4 }}>
+          <STitle>Oppgaver</STitle>
+          {allM && <span style={{ fontSize: ".75rem", color: P.done, fontWeight: 600 }}>Dagen er vunnet ✓</span>}
+        </div>
+        <div style={{ padding: "0 6px" }}><Micro>Merk 3 som «må». Hvis de er gjort, er dagen vunnet.</Micro></div>
+        <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 2 }}>
+          {tasks.map((t, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 6px", borderRadius: 8, background: t.done ? `${P.done}18` : "transparent", transition: "background .15s" }}>
+              <button onClick={() => upd(i, "done", !t.done)} style={{ width: 20, height: 20, minWidth: 20, borderRadius: 5, border: t.done ? `2px solid ${P.done}` : `1.5px solid ${P.border}`, background: t.done ? P.done : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .15s", padding: 0 }}>
+                {t.done && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+              </button>
+              <input type="text" value={t.text} onChange={e => upd(i, "text", e.target.value)} placeholder={`Oppgave ${i + 1}`} style={{ flex: 1, border: "none", background: "transparent", fontSize: ".88rem", color: t.done ? P.light : P.text, textDecoration: t.done ? "line-through" : "none", outline: "none", padding: "4px 0", fontWeight: 400, minWidth: 0 }} />
+              <select value={t.priority} onChange={e => upd(i, "priority", e.target.value)} style={{ border: "none", background: "transparent", color: pCol[t.priority], fontSize: ".72rem", fontWeight: 600, cursor: "pointer", outline: "none", textTransform: "uppercase", letterSpacing: ".05em", minWidth: 42, textAlign: "right", WebkitAppearance: "none", appearance: "none" }}>
+                <option value="må">MÅ</option>
+                <option value="bør">BØR</option>
+                <option value="kan">KAN</option>
+              </select>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 16, padding: "0 6px" }}>
+          <Btn ghost onClick={move}>Flytt uferdige til i morgen</Btn>
+          <Micro>Ingen skam. Bare flytt.</Micro>
+          {toast && <div style={{ marginTop: 8, padding: "8px 12px", background: toast.startsWith("Ikke") ? `${P.ma}14` : P.accentPale, color: toast.startsWith("Ikke") ? P.ma : P.accent, borderRadius: 8, fontSize: ".82rem", fontWeight: 500, animation: "fadeIn .2s ease" }}>{toast}</div>}
+        </div>
+      </Card>
+
+      {sessions.length > 0 && (
+        <Card delay={.2}>
+          <STitle>Først-økter</STitle>
+          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+            {sessions.map(s => (
+              <div key={s.id} style={{ padding: "10px 14px", background: P.bg, borderRadius: 8, fontSize: ".85rem" }}>
+                <span style={{ fontWeight: 500 }}>{fmtTime(s.startTime)}–{s.endTime ? fmtTime(s.endTime) : <span style={{ color: P.accent, animation: "pulse 2s infinite" }}>pågår</span>}</span>
+                {s.resultatText && <p style={{ color: P.muted, fontSize: ".82rem", marginTop: 4, fontWeight: 300 }}>{s.resultatText.length > 100 ? s.resultatText.slice(0, 100) + "…" : s.resultatText}</p>}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+/*  KVELDSBRIEF */
+const Kveldsbrief = ({ data, setData }) => {
+  const date = tomorrow();
+  const plan = data.dayPlans[date] || {};
+  const [lev, setLev] = useState(plan.leveranse || "");
+  const [k1, setK1] = useState(plan.kriterium1 || "");
+  const [k2, setK2] = useState(plan.kriterium2 || "");
+  const [k3, setK3] = useState(plan.kriterium3 || "");
+  const [fs, setFs] = useState(plan.forsteSteg || "");
+  const [saved, setSaved] = useState(false);
+  const [showTasks, setShowTasks] = useState(false);
+
+  const raw = data.tasks[date] || [];
+  const tasks = [...raw];
+  while (tasks.length < 12) tasks.push({ text: "", priority: "bør", done: false });
+  const filled = tasks.filter(t => t.text.trim()).length;
+
+  useEffect(() => {
+    const p = data.dayPlans[date] || {};
+    setLev(p.leveranse || ""); setK1(p.kriterium1 || ""); setK2(p.kriterium2 || ""); setK3(p.kriterium3 || ""); setFs(p.forsteSteg || "");
+  }, [date, data]);
+
+  const save = () => {
+    const next = { ...data, dayPlans: { ...data.dayPlans, [date]: { date, leveranse: lev, kriterium1: k1, kriterium2: k2, kriterium3: k3, forsteSteg: fs } } };
+    setData(next); saveData(next); setSaved(true); setTimeout(() => setSaved(false), 2000);
+  };
+
+  const updTask = (i, f, v) => {
+    const t = [...tasks]; t[i] = { ...t[i], [f]: v };
+    const next = { ...data, tasks: { ...data.tasks, [date]: t } };
+    setData(next); saveData(next);
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeIn .3s ease" }}>
+      <div style={{ textAlign: "center", padding: "8px 0 0" }}><p style={{ fontSize: ".78rem", color: P.light, fontWeight: 300 }}>Planlegger for {fmtDateLabel(date)}</p></div>
+      <Card>
+        <STitle>Dagens leveranse</STitle>
+        <Micro>Hva vil du våkne til i morgen?</Micro>
+        <div style={{ marginTop: 10 }}><Input value={lev} onChange={setLev} placeholder="Én klar leveranse…" /></div>
+      </Card>
+      <Card delay={.05}>
+        <STitle>3 kriterier</STitle>
+        <Micro>Hva må være sant når du er ferdig? (3 korte setninger)</Micro>
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+          <Input value={k1} onChange={setK1} placeholder="Kriterium 1" />
+          <Input value={k2} onChange={setK2} placeholder="Kriterium 2" />
+          <Input value={k3} onChange={setK3} placeholder="Kriterium 3" />
+        </div>
+      </Card>
+      <Card delay={.1}>
+        <STitle>Første steg</STitle>
+        <Micro>Hva er første bevegelse når du setter deg?</Micro>
+        <div style={{ marginTop: 10 }}><Input value={fs} onChange={setFs} placeholder="Første fysiske handling…" /></div>
+      </Card>
+      <div style={{ animation: "fadeUp .4s ease .15s both" }}>
+        <Btn onClick={save}>{saved ? "✓ Lagret" : "Lagre og klargjør"}</Btn>
+        <div style={{ textAlign: "center", marginTop: 6 }}><Micro>I morgen begynner du med først.</Micro></div>
+      </div>
+
+      <div style={{ animation: "fadeUp .4s ease .2s both" }}>
+        <button onClick={() => setShowTasks(!showTasks)} style={{
+          width: "100%", background: "none", border: `1px dashed ${P.border}`, borderRadius: 10,
+          padding: "14px 20px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center",
+          color: P.muted, fontSize: ".85rem", fontWeight: 400, transition: "all .2s",
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = P.accent; e.currentTarget.style.color = P.text; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = P.border; e.currentTarget.style.color = P.muted; }}
+        >
+          <span>Vet du allerede hva du skal gjøre i morgen?{filled > 0 ? ` (${filled} oppgaver lagt inn)` : ""}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transition: "transform .2s", transform: showTasks ? "rotate(180deg)" : "rotate(0)" }}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+      </div>
+
+      {showTasks && (
+        <Card delay={0} style={{ padding: "20px 16px" }}>
+          <STitle>Morgendagens oppgaver</STitle>
+          <Micro>Valgfritt. Du kan også fylle disse i morgen.</Micro>
+          <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 2 }}>
+            {tasks.map((t, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 6px", borderRadius: 8 }}>
+                <span style={{ width: 20, minWidth: 20, fontSize: ".72rem", color: P.light, textAlign: "center", fontWeight: 400 }}>{i + 1}</span>
+                <input type="text" value={t.text} onChange={e => updTask(i, "text", e.target.value)} placeholder={`Oppgave ${i + 1}`}
+                  style={{ flex: 1, border: "none", background: "transparent", fontSize: ".88rem", color: P.text, outline: "none", padding: "4px 0", fontWeight: 400, minWidth: 0 }} />
+                <select value={t.priority} onChange={e => updTask(i, "priority", e.target.value)} style={{
+                  border: "none", background: "transparent", color: pCol[t.priority],
+                  fontSize: ".72rem", fontWeight: 600, cursor: "pointer", outline: "none",
+                  textTransform: "uppercase", letterSpacing: ".05em", minWidth: 42,
+                  textAlign: "right", WebkitAppearance: "none", appearance: "none",
+                }}>
+                  <option value="må">MÅ</option>
+                  <option value="bør">BØR</option>
+                  <option value="kan">KAN</option>
+                </select>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+/*  SESSION */
+const Session = ({ data, setData, dateTab }) => {
+  const date = dateTab === "today" ? today() : tomorrow();
+  const [running, setRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [sid, setSid] = useState(null);
+  const [park, setPark] = useState("");
+  const [res, setRes] = useState("");
+  const [prompt, setPrompt] = useState(false);
+  const iv = useRef(null);
+  const TOTAL = 90 * 60;
+
+  useEffect(() => { const og = (data.sessions || []).find(s => s.date === date && !s.endTime); if (og && !sid) setPrompt(true); }, [date]);
+
+  const start = useCallback(() => {
+    setRunning(true); setElapsed(0); const id = uid(); setSid(id);
+    const s = { id, date, startTime: new Date().toISOString(), endTime: null, parkeringText: "", resultatText: "" };
+    const next = { ...data, sessions: [...(data.sessions || []), s] }; setData(next); saveData(next);
+  }, [data, date, setData]);
+
+  const stop = useCallback(() => {
+    setRunning(false); clearInterval(iv.current);
+    if (sid) { const next = { ...data, sessions: (data.sessions || []).map(s => s.id === sid ? { ...s, endTime: new Date().toISOString(), parkeringText: park, resultatText: res } : s) }; setData(next); saveData(next); setSid(null); setPark(""); setRes(""); }
+  }, [data, sid, park, res, setData]);
+
+  const cont = useCallback(() => {
+    const og = (data.sessions || []).find(s => s.date === date && !s.endTime);
+    if (og) { setSid(og.id); setPark(og.parkeringText || ""); setRes(og.resultatText || ""); setElapsed(Math.floor((Date.now() - new Date(og.startTime).getTime()) / 1000)); setRunning(true); }
+    setPrompt(false);
+  }, [data, date]);
+
+  const fin = useCallback(() => {
+    const og = (data.sessions || []).find(s => s.date === date && !s.endTime);
+    if (og) { const next = { ...data, sessions: (data.sessions || []).map(s => s.id === og.id ? { ...s, endTime: new Date().toISOString() } : s) }; setData(next); saveData(next); }
+    setPrompt(false);
+  }, [data, date, setData]);
+
+  useEffect(() => { if (running) iv.current = setInterval(() => setElapsed(e => e + 1), 1000); return () => clearInterval(iv.current); }, [running]);
+  useEffect(() => {
+    if (sid && running) {
+      const t = setTimeout(() => {
+        setData(prev => {
+          const next = { ...prev, sessions: (prev.sessions || []).map(s => s.id === sid ? { ...s, parkeringText: park, resultatText: res } : s) };
+          saveData(next);
+          return next;
+        });
+      }, 3000);
+      return () => clearTimeout(t);
+    }
+  }, [park, res, sid, running, setData]);
+
+  const rem = Math.max(0, TOTAL - elapsed);
+  const m = Math.floor(rem / 60), s = rem % 60;
+  const prog = Math.min(1, elapsed / TOTAL);
+  const over = elapsed > TOTAL;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeIn .3s ease" }}>
+      {prompt && (
+        <Card style={{ border: `1.5px solid ${P.accent}` }}>
+          <p style={{ fontSize: ".9rem", fontWeight: 500, marginBottom: 12 }}>Du har en økt som pågår. Fortsett eller avslutt?</p>
+          <div style={{ display: "flex", gap: 8 }}><Btn onClick={cont} style={{ flex: 1 }}>Fortsett</Btn><Btn ghost onClick={fin} style={{ flex: 1 }}>Avslutt</Btn></div>
+        </Card>
+      )}
+      <Card style={{ textAlign: "center", padding: "32px 22px" }}>
+        <div style={{ fontFamily: bF, fontSize: "3.5rem", fontWeight: 300, letterSpacing: "-.04em", color: over ? P.ma : P.text, lineHeight: 1, marginBottom: 4 }}>
+          {over && "+"}{String(m).padStart(2, "0")}:{String(s).padStart(2, "0")}
+        </div>
+        <div style={{ height: 3, background: P.borderLt, borderRadius: 2, margin: "14px auto", maxWidth: 200 }}>
+          <div style={{ height: "100%", background: over ? P.ma : P.accent, borderRadius: 2, width: `${prog * 100}%`, transition: "width 1s linear" }} />
+        </div>
+        <Micro style={{ marginTop: 0 }}>Dette er skapetid. Ingen e-post.</Micro>
+        <div style={{ marginTop: 20 }}>
+          {!running && !sid ? <Btn onClick={start}>Start økt</Btn> : running ? <Btn ghost danger onClick={stop}>Stopp økt</Btn> : <Btn onClick={start}>Ny økt</Btn>}
+        </div>
+      </Card>
+      {(running || sid) && <Card delay={.05}><STitle>Parkering</STitle><Micro>Skriv distraksjoner her og gå tilbake til leveransen.</Micro><div style={{ marginTop: 10 }}><Input value={park} onChange={setPark} multiline rows={4} placeholder="Tanker, innfall, ting å gjøre senere…" /></div></Card>}
+      {(running || sid) && <Card delay={.1}><STitle>Resultat</STitle><Micro>1–2 linjer: hva produserte du nå?</Micro><div style={{ marginTop: 10 }}><Input value={res} onChange={setRes} multiline rows={2} placeholder="Hva ble levert…" /></div></Card>}
+    </div>
+  );
+};
+
+/*  GUIDE */
+const Guide = ({ setScreen }) => {
+  const steps = [
+    { n: "1", t: "Kveld — Kveldsbrief", b: "Bruk 5 minutter hver kveld. Skriv morgendagens leveranse, tre kriterier for suksess, og det aller første steget. Nå vet du nøyaktig hva du skal gjøre når du våkner." },
+    { n: "2", t: "Morgen — I dag", b: "Åpne appen. Leveransen og første steg ligger klart. Fyll inn oppgaver og merk nøyaktig tre som «må». Hvis de tre er gjort, er dagen vunnet — resten er bonus." },
+    { n: "3", t: "Fokus — Først-økt", b: "Trykk «Start Først-økt». Du får 90 minutter med skapetid. Distraksjoner skriver du i Parkering og går tilbake til leveransen. Når du stopper, noter hva du produserte." },
+    { n: "4", t: "Slutt — Flytt videre", b: "Alt du ikke rakk? Trykk «Flytt uferdige til i morgen». Ingen skam. Så åpner du Kveldsbrief og legger sporene for neste dag." },
+    { n: "5", t: "Dine data — Lokal lagring og backup", b: "Alt lagres lokalt på denne enheten — ingen sky, ingen konto. Trykk database-ikonet øverst til høyre for å eksportere alt som JSON, eller importere data fra en annen enhet. Greit å ta backup av og til." },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeIn .3s ease" }}>
+      <Card>
+        <div style={{ textAlign: "center", marginBottom: 4 }}>
+          <STitle>Hvordan bruke Først</STitle>
+          <Micro style={{ marginTop: 8 }}>Én vane. Fire steg. Hver dag.</Micro>
+        </div>
+      </Card>
+
+      {steps.map((s, i) => (
+        <Card key={i} delay={i * 0.06}>
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <div style={{ width: 28, height: 28, minWidth: 28, borderRadius: "50%", background: P.accentPale, color: P.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: ".82rem", fontWeight: 600, marginTop: 1 }}>{s.n}</div>
+            <div>
+              <p style={{ fontFamily: bF, fontSize: ".95rem", fontWeight: 500, color: P.text, marginBottom: 4 }}>{s.t}</p>
+              <p style={{ fontSize: ".85rem", color: P.muted, lineHeight: 1.6, fontWeight: 300 }}>{s.b}</p>
+            </div>
+          </div>
+        </Card>
+      ))}
+
+      <Card delay={0.3}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div>
+            <p style={{ fontFamily: bF, fontSize: ".95rem", fontWeight: 500, color: P.text, marginBottom: 6 }}>Prioriteter</p>
+            <div style={{ display: "flex", gap: 16 }}>
+              {[["MÅ", P.ma, "Må gjøres. Tre stykk."], ["BØR", P.bor, "Viktig, men ikke kritisk."], ["KAN", P.kan, "Fint om det skjer."]].map(([label, color, desc]) => (
+                <div key={label} style={{ flex: 1 }}>
+                  <span style={{ fontSize: ".72rem", fontWeight: 600, color, letterSpacing: ".05em" }}>{label}</span>
+                  <p style={{ fontSize: ".78rem", color: P.muted, fontWeight: 300, marginTop: 2 }}>{desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ borderTop: `1px solid ${P.borderLt}`, paddingTop: 10, marginTop: 4 }}>
+            <p style={{ fontFamily: bF, fontSize: ".95rem", fontWeight: 500, color: P.text, marginBottom: 4 }}>Filosofien</p>
+            <p style={{ fontSize: ".85rem", color: P.muted, lineHeight: 1.6, fontWeight: 300 }}>
+              Først handler om å fjerne friksjon mellom plan og handling. Du tenker kvelden før, så morgenen handler om å gjøre — ikke bestemme. Start smått. Beskytt skapetiden. Flytt det du ikke rakk uten skam.
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <div style={{ animation: "fadeUp .4s ease .35s both" }}>
+        <Btn onClick={() => setScreen("dashboard")}>Tilbake til I dag</Btn>
+      </div>
+    </div>
+  );
+};
+
+/*  DATA */
+const DataScreen = ({ data, setData }) => {
+  const [imp, setImp] = useState("");
+  const [st, setSt] = useState("");
+  const fr = useRef(null);
+  const exp = () => { const j = JSON.stringify(data, null, 2); const b = new Blob([j], { type: "application/json" }); const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href = u; a.download = `forst-data-${today()}.json`; a.click(); URL.revokeObjectURL(u); setSt("Eksportert!"); setTimeout(() => setSt(""), 2000); };
+  const copy = () => { navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => { setSt("Kopiert!"); setTimeout(() => setSt(""), 2000); }); };
+  const doImport = () => { try { const p = JSON.parse(imp); if (p.dayPlans && p.tasks && p.sessions) { setData(p); saveData(p); setImp(""); setSt("Importert!"); setTimeout(() => setSt(""), 2000); } else setSt("Ugyldig format."); } catch { setSt("Kunne ikke lese JSON."); } };
+  const handleFile = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => setImp(ev.target.result); r.readAsText(f); };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeIn .3s ease" }}>
+      <Card>
+        <STitle>Eksporter data</STitle>
+        <Micro>Last ned alt som JSON.</Micro>
+        <div style={{ display: "flex", gap: 8, marginTop: 12 }}><Btn ghost onClick={exp} style={{ flex: 1 }}>Last ned</Btn><Btn ghost onClick={copy} style={{ flex: 1 }}>Kopier</Btn></div>
+      </Card>
+      <Card delay={.05}>
+        <STitle>Importer data</STitle>
+        <Micro>Lim inn JSON eller last opp fil.</Micro>
+        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+          <Input value={imp} onChange={setImp} multiline rows={5} placeholder='{"dayPlans":{}, "tasks":{}, "sessions":[]}' />
+          <div style={{ display: "flex", gap: 8 }}><Btn ghost onClick={() => fr.current?.click()} style={{ flex: 1 }}>Last opp fil</Btn><Btn onClick={doImport} style={{ flex: 1, padding: "10px 18px", fontSize: ".85rem" }}>Importer</Btn></div>
+          <input ref={fr} type="file" accept=".json" onChange={handleFile} style={{ display: "none" }} />
+        </div>
+      </Card>
+      {st && <div style={{ textAlign: "center", padding: 10, background: P.accentPale, color: P.accent, borderRadius: 8, fontSize: ".85rem", fontWeight: 500, animation: "fadeIn .2s ease" }}>{st}</div>}
+    </div>
+  );
+};
+
+/*  APP */
+function App() {
+  const [data, setData] = useState(defaultData());
+  const [screen, setScreen] = useState("dashboard");
+  const [dateTab, setDateTab] = useState("today");
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => { loadData().then(d => { setData(d); setLoaded(true); }); }, []);
+  if (!loaded) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: bF, color: P.muted }}><p style={{ animation: "pulse 1.5s infinite" }}>Laster…</p></div>;
+  const showDT = screen === "dashboard" || screen === "session";
+  return (
+    <div style={{ minHeight: "100vh", background: P.bg }}>
+      <Header screen={screen} setScreen={setScreen} dateTab={dateTab} setDateTab={setDateTab} showDateTabs={showDT} />
+      <main style={{ maxWidth: 560, margin: "0 auto", padding: "16px 20px 80px" }}>
+        {screen === "dashboard" && <Dashboard data={data} setData={setData} dateTab={dateTab} onStart={() => setScreen("session")} />}
+        {screen === "kveldsbrief" && <Kveldsbrief data={data} setData={setData} />}
+        {screen === "session" && <Session data={data} setData={setData} dateTab={dateTab} />}
+        {screen === "guide" && <Guide setScreen={setScreen} />}
+        {screen === "data" && <DataScreen data={data} setData={setData} />}
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>};
 const bF = "'Fraunces', serif";
 const pCol = { "må": P.ma, "bør": P.bor, "kan": P.kan };
 
